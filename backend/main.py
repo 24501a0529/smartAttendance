@@ -7,7 +7,7 @@ import numpy as np
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from datetime import date
+from datetime import date, datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -37,7 +37,7 @@ app.add_middleware(
 # Admin Auth Endpoint
 @app.post("/api/auth/login", response_model=schemas.Token)
 def login(form_data: schemas.LoginRequest):
-    if form_data.username == "admin" and form_data.password == "admin123":
+    if form_data.username == "admin" and form_data.password == "admin":
         access_token = auth.create_access_token(data={"sub": form_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -72,14 +72,20 @@ async def mark_attendance(
     else:
         raise HTTPException(status_code=404, detail="User not recognized")
 
-    # Check if attendance already marked today
-    today = date.today()
-    existing = db.query(models.Attendance).filter(
-        models.Attendance.user_id == matched_id
-    ).all()
-    already_marked = any(a.timestamp.date() == today for a in existing)
-    if already_marked:
-        raise HTTPException(status_code=400, detail="Attendance already marked for today")
+    # Check if attendance already marked within the last 1 hour
+    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+    recent_attendance = db.query(models.Attendance).filter(
+        models.Attendance.user_id == matched_id,
+        models.Attendance.timestamp >= one_hour_ago
+    ).first()
+
+    if recent_attendance:
+        next_allowed = recent_attendance.timestamp + timedelta(hours=1)
+        minutes_remaining = int((next_allowed - datetime.utcnow()).total_seconds() / 60)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Attendance already marked. Please try again in {minutes_remaining} minute(s)."
+        )
 
     attendance = models.Attendance(
         user_id=matched_id,

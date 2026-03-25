@@ -80,8 +80,8 @@ const Overview = () => {
         const fetchStats = async () => {
             try {
                 const [logsRes, usersRes] = await Promise.all([
-                    fetch('http://localhost:8001/api/attendance'),
-                    fetch('http://localhost:8001/api/users')
+                    fetch('http://localhost:8000/api/attendance'),
+                    fetch('http://localhost:8000/api/users')
                 ]);
                 const logs = await logsRes.json();
                 const users = await usersRes.json();
@@ -119,7 +119,7 @@ const AttendanceLogs = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://localhost:8001/api/attendance')
+        fetch('http://localhost:8000/api/attendance')
             .then(res => res.json())
             .then(data => {
                 setLogs(data);
@@ -198,12 +198,12 @@ const UserManagement = () => {
 
     const deleteUser = async (id) => {
         if (!window.confirm('Delete this user?')) return;
-        const res = await fetch(`http://localhost:8001/api/users/${id}`, { method: 'DELETE' });
+        const res = await fetch(`http://localhost:8000/api/users/${id}`, { method: 'DELETE' });
         if (res.ok) setUsers(users.filter(u => u.id !== id));
     };
 
     useEffect(() => {
-        fetch('http://localhost:8001/api/users').then(res => res.json()).then(setUsers);
+        fetch('http://localhost:8000/api/users').then(res => res.json()).then(setUsers);
     }, []);
 
     const startCamera = async () => {
@@ -258,7 +258,7 @@ const UserManagement = () => {
         formData.append('department', newUser.department);
         formData.append('image_base64', uploadedBase64);
 
-        const res = await fetch('http://localhost:8001/api/users', {
+        const res = await fetch('http://localhost:8000/api/users', {
             method: 'POST',
             body: formData
         });

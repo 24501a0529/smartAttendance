@@ -29,7 +29,7 @@ const KioskMode = () => {
             formData.append('image_base64', image);
             formData.append('liveness_score', livenessStatus);
 
-            const response = await fetch('http://localhost:8001/api/attendance', {
+            const response = await fetch('http://localhost:8000/api/attendance', {
                 method: 'POST',
                 body: formData
             });
